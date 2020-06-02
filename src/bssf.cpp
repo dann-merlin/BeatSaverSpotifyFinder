@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
+std::vector<spotifyget::songdata> bssf::songs;
 
 void bssf::start(std::string playlistURI) {
 	spotifyget::get_playlist(playlistURI, &songs);
