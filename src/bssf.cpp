@@ -42,12 +42,13 @@ void downloadToFile(std::string query) {
 	}
 
 	size_t filename_len = query.size() + 1;
-	char filename[filename_len];
-	strncpy(filename, query.c_str(), filename_len);
+	char *filename = new char[filename_len];
+	strncpy_s(filename, filename_len, query.c_str(), filename_len);
 	std::ofstream file_out(std::string("downloaded/") + std::string(&(query[query.find_last_of("/")])), std::ios::binary);
 	file_out.write(res.responseText.c_str(), sizeof(char) * res.responseText.size());
 	/* file_out << res.responseText; */
 	file_out.close();
+	delete filename;
 }
 
 void bssf::findBeatsaverSong(spotifyget::songdata songdata) {
