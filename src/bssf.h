@@ -12,7 +12,18 @@ class bssf {
 		static std::set<std::string> song_set;
 
 		static bool isDuplicate(BsSong& song);
+		static bool apply_filters(BsSong& song);
 		static void findBeatsaverSong(spotifyget::songdata songdata);
 	public:
-		static void start(std::string playlistURI);
+		struct cmdline_args {
+			std::string download_folder = "";
+			std::string playlistURI = "";
+			unsigned long filter_min_downloads = 0;
+			float like_ratio = 0.f;
+			bool download_songs = false;
+			bool invert_results = false;
+		};
+		static cmdline_args args;
+
+		static void start();
 };
