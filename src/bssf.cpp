@@ -2,10 +2,14 @@
 #include <algorithm>
 #include <bs_search.h>
 #include <bs_curl.h>
+#include <cctype>
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <thread>
+#include <getopt.h>
+
+bssf::cmdline_args bssf::args;
 
 std::vector<spotifyget::songdata> bssf::songs;
 std::vector<BsSong> bssf::beatsaver_songs;
@@ -44,35 +48,44 @@ void downloadToFile(std::string query) {
 	size_t filename_len = query.size() + 1;
 	char *filename = new char[filename_len];
 	strncpy_s(filename, filename_len, query.c_str(), filename_len);
-	std::ofstream file_out(std::string("downloaded/") + std::string(&(query[query.find_last_of("/")])), std::ios::binary);
+	std::ofstream file_out(bssf::args.download_folder + std::string(&(query[query.find_last_of("/")])), std::ios::binary);
 	file_out.write(res.responseText.c_str(), sizeof(char) * res.responseText.size());
-	/* file_out << res.responseText; */
 	file_out.close();
 	delete filename;
 }
 
+bool bssf::apply_filters(BsSong& song) {
+	if(args.like_ratio > song.stats.rating) return false;
+	if(args.filter_min_downloads > song.stats.downloads) return false;
+	return true;
+}
+
 void bssf::findBeatsaverSong(spotifyget::songdata songdata) {
 	spotifyget::songdata searchfor = spotifyget::songdata{simplifystring(songdata.artist), simplifystring(songdata.songname)};
+	if(searchfor.artist == "" || searchfor.songname == "") return;
 	int max_sites = 2;
 	std::vector<BsSong> song_list = beatcver.searchText(songdata.songname + " " + songdata.artist, max_sites); 
-	if(searchfor.artist == "" || searchfor.songname == "") return;
 	std::vector<BsSong> filtered_song_list;
 	int entry_count = 0;
 	for(BsSong& song : song_list) { // TODO also compare with song.name
+		std::string simple_entry_name = simplifystring(song.name);
+		bool name = simple_entry_name.find(searchfor.songname) != std::string::npos;
+		bool artist = simple_entry_name.find(searchfor.artist) != std::string::npos;
 		if(isDuplicate(song)) continue;
+		song_set.insert(song.key);
 		std::cerr << "[" << std::to_string(song_counter) << "/" << std::to_string(all_song_count) << "] ... " << "Beatsaver entries: [" << std::to_string(++entry_count) << "/" << std::to_string(song_list.size()) << "]\r";
 		std::flush(std::cerr);
 		std::string bs_simple_song = simplifystring(song.metadata.songName);
 		std::string bs_simple_artist = simplifystring(song.metadata.songAuthorName);
 		if(bs_simple_song == "" || bs_simple_artist == "") continue;
-		bool name, artist;
-		name = (bs_simple_song.find(searchfor.songname) != std::string::npos) ||
+		name |= (bs_simple_song.find(searchfor.songname) != std::string::npos) ||
 			(searchfor.songname.find(bs_simple_song) != std::string::npos);
-		artist = (bs_simple_artist.find(searchfor.artist) != std::string::npos) ||
+		artist |= (bs_simple_artist.find(searchfor.artist) != std::string::npos) ||
 			(searchfor.artist.find(bs_simple_artist) != std::string::npos);
 		if(name && artist) {
-			filtered_song_list.push_back(song);
-			song_set.insert(song.key);
+			if(apply_filters(song) != args.invert_results) {
+				filtered_song_list.push_back(song);
+			}
 		}
 	}
 	if(filtered_song_list.size()) std::cout << "Found " << std::to_string(filtered_song_list.size()) << " Beatsaver Beatmaps for Song \"" << songdata.songname << "\" by \"" << songdata.artist << "\":" << std::endl;
@@ -83,15 +96,15 @@ void bssf::findBeatsaverSong(spotifyget::songdata songdata) {
 		std::cout << "Artist: " << song.metadata.songAuthorName << std::endl;
 		std::cout << "Key: " << song.key << std::endl;
 		std::cout << "Link: " << song.directDownload << std::endl << std::endl;
-		if(download) {
+		if(args.download_songs) {
 			std::thread *t = new std::thread(downloadToFile, song.directDownload);
 			download_threads.push_back(t);
 		}
 	}
 }
 
-void bssf::start(std::string p) {
-	std::string playlistURI = p;
+void bssf::start() {
+	std::string playlistURI = args.playlistURI;
 	while(playlistURI != "stop") {
 		songs.clear();
 		beatsaver_songs.clear();
@@ -115,23 +128,75 @@ void bssf::start(std::string p) {
 
 
 static void usage(int argc, char** argv) {
-	std::cout << "Usage: " << std::string(argv[0]) << " spotifyplaylist_uri" << " [ --download | -d ]" << std::endl;
+	std::cout << "Usage: " << std::string(argv[0]) << " [ <OPTIONS> ] <SpotifyURI of a playlist>" << std::endl << std::endl;
+
+	std::cout << "OPTIONS:" << std::endl;
+
+	std::cout << "\t-d, --downloads [ path to download folder ]" << std::endl;
+	std::cout << "\t\tDirectly download the zip files to the given path. Default: current directory" << std::endl << std::endl;
+
+	std::cout << "\t-r, --like-ratio [ ratio ]" << std::endl;
+	std::cout << "\t\tFilter out songs, whose like/dislike ratio is worse than \'ratio\'. Default: 0.00 (no songs get filtered out)" << std::endl << std::endl;
+
+	std::cout << "\t-m, --filter-min-downloads downloadcount" << std::endl;
+	std::cout << "\t\tFilter out songs, that don't have more than 'downloadcount' songs." << std::endl << std::endl;
+
+	std::cout << "\t-i, --invert-results" << std::endl;
+	std::cout << "\t\tInvert the filters provided by -r and -m" << std::endl << std::endl;
+
 	exit(EXIT_SUCCESS);
 }
 
-int main(int argc, char** argv) {
-	if(argc < 2 || argc > 3 || std::string(argv[1]) == "--help" || std::string(argv[1]) == "-h") {
-		usage(argc, argv);
+static void parse_args(int argc, char** argv) {
+	if(1 == argc) usage(argc, argv);
+	std::vector<option> options;
+	std::string options_short = "";
+	options.push_back(option{"download", optional_argument, nullptr, 'd'});
+	options.push_back(option{"like-ratio", optional_argument, nullptr, 'r'});
+	options.push_back(option{"invert-results", no_argument, nullptr, 'i'});
+	options.push_back(option{"filter-min-downloads", required_argument, nullptr, 'm'});
+	options.push_back(option{"help", no_argument, nullptr, 'h'});
+	options.push_back(option{nullptr, 0, nullptr, 0});
+
+	for(option& o : options) {
+		if(o.val) options_short.append(1, (char) o.val);
 	}
-	if(3 == argc) {
-		if(std::string(argv[2]) == "--download" ||  std::string(argv[2]) == "-d" ) {
-			download = true;
-		} else {
-			usage(argc, argv);
+
+	int opt_code, indexptr;
+	while(-1 != ( opt_code = getopt_long_only(argc, argv, options_short.c_str(), options.data(), &indexptr))) {
+		switch(opt_code) {
+			case 'h':
+				usage(argc, argv);
+				break;
+			case 'm':
+				bssf::args.filter_min_downloads = std::stoul(std::string(optarg));
+				break;
+			case 'd':
+				bssf::args.download_songs = true;
+				if(nullptr != optarg) bssf::args.download_folder = std::string(optarg);
+				break;
+			case 'i':
+				bssf::args.invert_results = true;
+				break;
+			case 'r':
+				{
+				float ratio = (nullptr == optarg) ? 0.f : std::stof(std::string(optarg));
+				bssf::args.like_ratio = ratio;
+				}
+				break;
+			default:
+				std::cerr << "This is weird... the option \"" << "-" << std::to_string((char)opt_code) << "\" was recognized, I can't handle it. Whatever I'll just forget this..." << std::endl;
 		}
 	}
+
+	bssf::args.playlistURI = std::string(argv[argc-1]);
+	std::cout << "PlaylistURI: " << bssf::args.playlistURI << " was detected" << std::endl;
+}
+
+int main(int argc, char** argv) {
+	parse_args(argc, argv);
 	beatcver.init();
-	bssf::start(std::string(argv[1]));
+	bssf::start();
 	if(download) {
 		std::cout << "Waiting for downloads to finish..." << std::endl;
 		for(std::thread* t : download_threads) {
