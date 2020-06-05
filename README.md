@@ -5,7 +5,8 @@ This is a simple command-line application for Linux/Windows, that allows you to 
 
 <h2>Usage:</h2>
 Download the bin folder (click on it in the structure above and then on the
-download icon next to "clone" and select zip under "Download this directory"). 
+download icon next to "clone" and select zip under "Download this directory").
+Extract the files in the directory.
 Open a commandline (for example with Win+R and enter cmd) and navigate to the
 directory where the bssf.exe is located (you can change directory with cd)
 Example (Say the bssf.exe is located in your Downloads directory):
