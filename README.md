@@ -24,7 +24,7 @@ Then run the application with
 It will show you the options you have available and how to use the program.
 
 The following command will search the Playlist with the URI 5tucYhsJP4eThEX6ILK0Yb
-and download the beatmaps, whose like to dislike ratio is greater than 0.3 (30%) and more than 60000 Downloads.
+and download the beatmaps, whose like to dislike ratio is greater than 0.3 (30%) and which have more than 60000 Downloads.
 You can find out the URI of a Playlist by right-clicking it in spotify -> Share -> Copy Spotify URI
 Be sure to remove the preceding "spotify:playlist:"
 It will save the zip files to the directory "C:\Users\Peter\Documents".
