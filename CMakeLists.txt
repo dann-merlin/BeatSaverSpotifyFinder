@@ -5,10 +5,7 @@ if(UNIX)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lcurl -lpthread")
 endif(UNIX)
 
-project(beatsaverspotifyfinder VERSION 0.0.1 DESCRIPTION "Find beatsaver songs for spotify playlists")
-
-file(GLOB_RECURSE SOURCE_FILES "src/*.cpp")
-file(GLOB_RECURSE HEADER_FILES "include/*.h")
+project(beatsaverspotifyfinder VERSION 0.0.1.1 DESCRIPTION "Find beatsaver songs for spotify playlists")
 
 find_package(nlohmann_json 3.2.0 REQUIRED)
 find_package(CURL REQUIRED)
@@ -20,17 +17,22 @@ if(UNIX)
 endif(UNIX)
 
 if(WIN32)
-	set(BEATCPPVER_STATIC 1)
-	add_subdirectory(${CMAKE_SOURCE_DIR}/deps/beatcppver)
+	#set(BEATCPPVER_STATIC 1)
+	add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/deps/beatcppver")
 endif(WIN32)
 
-add_executable(bssf ${SOURCE_FILES})
+set(SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/bssf.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/spotifyget.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/b64_encode.cpp")
+set(HEADER_FILES "${CMAKE_CURRENT_SOURCE_DIR}/include/bssf.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/spotifyget.h" "${CMAKE_CURRENT_SOURCE_DIR}/include/b64_encode.h" )
 
-target_link_libraries(bssf PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(bssf PRIVATE CURL::libcurl)
-target_include_directories(bssf PRIVATE ${CMAKE_SOURCE_DIR}/include)
-target_include_directories(bssf PRIVATE ${CMAKE_SOURCE_DIR}/deps/beatcppver/include)
-target_link_libraries(bssf PRIVATE beatcppver)
+add_executable(bssf ${SOURCE_FILES} ${HEADER_FILES})
+
+message("curl dir: ${CURL_INCLUDE_DIR}")
+
+target_link_libraries(bssf nlohmann_json::nlohmann_json)
+target_link_libraries(bssf CURL::libcurl)
+message("source dir is: ${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(bssf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_include_directories(bssf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/beatcppver/include")
+target_link_libraries(bssf beatcppver)
 
 set_target_properties(bssf PROPERTIES VERSION ${PROJECT_VERSION})
-
