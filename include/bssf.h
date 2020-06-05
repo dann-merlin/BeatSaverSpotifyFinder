@@ -16,7 +16,7 @@ class bssf {
 		static void findBeatsaverSong(spotifyget::songdata songdata);
 	public:
 		struct cmdline_args {
-			std::string download_folder = "";
+			std::string download_folder = ".";
 			std::string playlistURI = "";
 			unsigned long filter_min_downloads = 0;
 			float like_ratio = 0.f;

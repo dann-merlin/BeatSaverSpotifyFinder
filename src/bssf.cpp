@@ -51,6 +51,7 @@ void downloadToFile(std::string query) {
 		return;
 	}
 
+	std::cout << "Download Folder: " << bssf::args.download_folder << std::endl;
 	std::string filename = std::string(&(query[query.find_last_of("/")+1]));
 	std::string filepath = bssf::args.download_folder + PATH_SEPERATOR + filename;
 	/*
@@ -62,8 +63,10 @@ void downloadToFile(std::string query) {
 	strncpy(path, filepath.c_str(), filename_len);
 #endif
 	*/
+	std::cout << "trying to open path: " << filepath << std::endl;
 	std::ofstream file_out(filepath, std::ios::binary);
 	file_out.write(res.responseText.c_str(), sizeof(char) * res.responseText.size());
+	file_out.flush();
 	file_out.close();
 	//delete path;
 }
@@ -146,16 +149,16 @@ static void usage(int argc, char** argv) {
 
 	std::cout << "OPTIONS:" << std::endl;
 
-	std::cout << "\t-d, --downloads [ path to download folder ]" << std::endl;
+	std::cout << "\t--download <path to download folder>" << std::endl;
 	std::cout << "\t\tDirectly download the zip files to the given path. Default: current directory" << std::endl << std::endl;
 
-	std::cout << "\t-r, --like-ratio [ ratio ]" << std::endl;
+	std::cout << "\t--like-ratio <ratio>" << std::endl;
 	std::cout << "\t\tFilter out songs, whose like/dislike ratio is worse than \'ratio\'. Default: 0.00 (no songs get filtered out)" << std::endl << std::endl;
 
-	std::cout << "\t-m, --filter-min-downloads downloadcount" << std::endl;
+	std::cout << "\t--filter-min-downloads <downloadcount>" << std::endl;
 	std::cout << "\t\tFilter out songs, that don't have more than 'downloadcount' songs." << std::endl << std::endl;
 
-	std::cout << "\t-i, --invert-results" << std::endl;
+	std::cout << "\t--invert-results" << std::endl;
 	std::cout << "\t\tInvert the filters provided by -r and -m" << std::endl << std::endl;
 
 	exit(EXIT_SUCCESS);
@@ -165,7 +168,7 @@ static void parse_args(int argc, char** argv) {
 	if(1 == argc) usage(argc, argv);
 	std::vector<option> options;
 	std::string options_short = "";
-	options.push_back(option{"download", optional_argument, nullptr, 'd'});
+	options.push_back(option{"download", required_argument, nullptr, 'd'});
 	options.push_back(option{"like-ratio", optional_argument, nullptr, 'r'});
 	options.push_back(option{"invert-results", no_argument, nullptr, 'i'});
 	options.push_back(option{"filter-min-downloads", required_argument, nullptr, 'm'});
@@ -177,7 +180,7 @@ static void parse_args(int argc, char** argv) {
 	}
 
 	int opt_code, indexptr;
-	while(-1 != ( opt_code = getopt_long_only(argc, argv, options_short.c_str(), options.data(), &indexptr))) {
+	while(-1 != ( opt_code = getopt_long(argc, argv, options_short.c_str(), options.data(), &indexptr))) {
 		switch(opt_code) {
 			case 'h':
 				usage(argc, argv);
@@ -187,7 +190,8 @@ static void parse_args(int argc, char** argv) {
 				break;
 			case 'd':
 				bssf::args.download_songs = true;
-				if(nullptr != optarg) bssf::args.download_folder = std::string(optarg);
+				if(optarg) std::cout << "settings the download_folder to: " << std::string(optarg) << std::endl;
+				if(optarg) bssf::args.download_folder = std::string(optarg);
 				break;
 			case 'i':
 				bssf::args.invert_results = true;
