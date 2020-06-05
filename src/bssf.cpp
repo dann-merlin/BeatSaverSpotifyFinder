@@ -9,6 +9,12 @@
 #include <thread>
 #include <getopt.h>
 
+#ifdef _WIN32
+#define PATH_SEPERATOR "\\"
+#else
+#define PATH_SEPERATOR "/"
+#endif
+
 bssf::cmdline_args bssf::args;
 
 std::vector<spotifyget::songdata> bssf::songs;
@@ -45,17 +51,21 @@ void downloadToFile(std::string query) {
 		return;
 	}
 
-	size_t filename_len = query.size() + 1;
-	char *filename = new char[filename_len];
+	std::string filename = std::string(&(query[query.find_last_of("/")+1]));
+	std::string filepath = bssf::args.download_folder + PATH_SEPERATOR + filename;
+	/*
+	size_t filename_len = filepath.size() + 1;
+	char *path = new char[filename_len];
 #ifdef _WIN32
-	strncpy_s(filename, filename_len, query.c_str(), filename_len);
+	strncpy_s(path, filename_len, filepath.c_str(), filename_len);
 #else
-	strncpy(filename, query.c_str(), filename_len);
+	strncpy(path, filepath.c_str(), filename_len);
 #endif
-	std::ofstream file_out(bssf::args.download_folder + std::string(&(query[query.find_last_of("/")])), std::ios::binary);
+	*/
+	std::ofstream file_out(filepath, std::ios::binary);
 	file_out.write(res.responseText.c_str(), sizeof(char) * res.responseText.size());
 	file_out.close();
-	delete filename;
+	//delete path;
 }
 
 bool bssf::apply_filters(BsSong& song) {

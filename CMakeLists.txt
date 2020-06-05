@@ -34,6 +34,9 @@ message("source dir is: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(bssf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_include_directories(bssf PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/beatcppver/include")
 target_link_libraries(bssf beatcppver)
+if(WIN32)
+target_link_libraries(bssf -static-libgcc -static-libstdc++)
+endif(WIN32)
 
 set_target_properties(bssf PROPERTIES VERSION ${PROJECT_VERSION})
 
