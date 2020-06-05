@@ -1,0 +1,3 @@
+[submodule "deps/beatcppver"]
+	path = deps/beatcppver
+	url = https://gitlab.cs.fau.de/yp98ocaw/beatcppver.git
