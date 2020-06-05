@@ -8,4 +8,5 @@ die() {
 
 [ "$OS" == "Windows_NT" ] || [ -f "$dir/build/Makefile" ] || "$dir/configure.sh" $@
 
-cmake --build "$dir/build" -j4
+cmake --build "$dir/build" -j4 && \
+mv "$dir/build/deps/libbeatcppver.dll" "$dir/build"
