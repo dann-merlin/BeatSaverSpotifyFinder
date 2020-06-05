@@ -22,3 +22,5 @@ set_target_properties(bssf PROPERTIES VERSION ${PROJECT_VERSION})
 
 target_include_directories(bssf PRIVATE src)
 target_link_libraries(bssf beatcppver)
+
+install(TARGETS bssf RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}")
