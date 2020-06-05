@@ -47,7 +47,11 @@ void downloadToFile(std::string query) {
 
 	size_t filename_len = query.size() + 1;
 	char *filename = new char[filename_len];
+#ifdef _WIN32
 	strncpy_s(filename, filename_len, query.c_str(), filename_len);
+#else
+	strncpy(filename, query.c_str(), filename_len);
+#endif
 	std::ofstream file_out(bssf::args.download_folder + std::string(&(query[query.find_last_of("/")])), std::ios::binary);
 	file_out.write(res.responseText.c_str(), sizeof(char) * res.responseText.size());
 	file_out.close();
