@@ -1,4 +1,4 @@
-<h1>Beatsaver Spotify Finder/h1>
+<h1>Beatsaver Spotify Finder</h1>
 Find and download all your Spotify songs on beatsaver.com!
 
 This is a simple command-line application for Linux/Windows, that allows you to automatically search for and download all Songs in a given Spotify Playlist
