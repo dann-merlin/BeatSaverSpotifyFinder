@@ -33,16 +33,16 @@ bool spotifyget::authorization() {
 
 	json j = json::parse(response.responseText);
 	/* std::cout << "Received Authorization Token:" << std::endl; */
-	if(!j["access_token"].is_null()) access_token = j["access_token"];
+	if(!j["access_token"].is_null()) access_token = j["access_token"].get<std::string>();
 	/* std::cout << "access_token:" << std::endl; */
 	/* std::cout << access_token << std::endl; */
-	if(!j["token_type"].is_null()) token_type = j["token_type"];
+	if(!j["token_type"].is_null()) token_type = j["token_type"].get<std::string>();
 	/* std::cout << "token_type:" << std::endl; */
 	/* std::cout << token_type << std::endl; */
 	if(!j["expires_in"].is_null()) expires_in = j["expires_in"];
 	/* std::cout << "expires_in:" << std::endl; */
 	/* std::cout << std::to_string(expires_in) << std::endl; */
-	if(!j["scope"].is_null()) scope = j["scope"];
+	if(!j["scope"].is_null()) scope = j["scope"].get<std::string>();
 	/* std::cout << "scope:" << std::endl; */
 	/* std::cout << scope << std::endl; */
 	return true;

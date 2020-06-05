@@ -2,3 +2,7 @@ build/
 compile_commands.json
 .clangd/
 found
+downloaded/
+indexlist
+.vs/
+.vscode/
